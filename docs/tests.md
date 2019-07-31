@@ -2,7 +2,7 @@
 
 https://github.com/microbit-foundation/DAPLink-builds/tree/f0b80210f9bf0336ce36674454119a8843bf9e85/tests/fat-binaries
 
-**Conclusions about DAPLink versions:**
+## Conclusions about DAPLink versions:
 
 - Version 0234 does not stop processing the file after the End-Of-File record
     - We don’t fully understand this behaviour yet
@@ -19,7 +19,8 @@ https://github.com/microbit-foundation/DAPLink-builds/tree/f0b80210f9bf0336ce366
         - Not a valid option
 - Version 0234 and 0254 can write to non-sequential addresses
 
-**Current Proposition**
+## Current Proposition
+
 Our current proposition contains data in this order in 512-byte blocks:
 
 - micro:bit v1 flash data
@@ -41,4 +42,3 @@ This format:
 - Needs updates on DAPLink for micro:bit v2 to know how to process the undefined record types used for metadata
 - Needs updates on DAPLink for micro:bit v2 to ignore the first end-of-file record
     - This record possibly needs to be wrapped in some metadata
-
