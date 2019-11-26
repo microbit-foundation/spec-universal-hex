@@ -1,11 +1,11 @@
 # micro:bit Fat Binaries Format
 
-Specification version 0.1.0.
+Specification version 0.2.0.
 
 ## Intel Hex Record Types
 
 In all the DAPLink versions we’ve tested DAPLink ignores any Intel Hex record with an unrecognised record type.
-We can use this to our advantage to include metadata in unused record types that will be ignored in the deployed versions of DAPLink for micro:bit v1, and processed in DAPLink for micro:bit v2.
+We can use this to our advantage to pack micro:bit v2 data in unused record types that will be ignored in the deployed versions of DAPLink for micro:bit v1, and correctly processed in DAPLink for micro:bit v2.
 
 ## 512 Byte Blocks
 
@@ -18,11 +18,10 @@ Conventional hex:
 
 ```
 Extended Linear Address
-X * Data lines of N bytes (typically 16)
+X * Data records of N bytes (typically 16)
 ...
-
 Extended Linear Address
-Y * Data lines of N bytes (typically 16)
+Y * Data records of N bytes (typically 16)
 ...
 End of file record
 ```
@@ -32,30 +31,33 @@ Proposed Fat hex:
 ```
 X * 512 byte "hex blocks" for micro:bit v1 each containing
 {
+    Header metadata record for micro:bit v1
     Extended Linear Address
-    Header metadata record 
-    10* 16 byte lines
+    10 * data record lines (16 bytes)
     Block end record (& padding)
 }
-End of file record/block (512 bytes, or compacted with previous block?)
 P * 512 byte "hex blocks" for micro:bit v2 each containing
 {
+    Header metadata record for micro:bit v2
     Extended Linear Address
-    Header metadata record 
-    10* 16 byte lines
+    10 * "custom" data record lines (16 bytes)
     Block end record (& padding)
 }
 End of file record/block (512 bytes, or compacted with previous block?)
 ```
 
+Where `custom data record` contains an unused record-type that identifies micro:bit v2 data.
+
 As an initial test, a Python script has been used to convert a ‘standard’ micro:bit v1 Intel Hex file, broke it down in blocks of 10 records with 16 bytes of data each (the original data records were 16 bytes already), and modify each block to contain the following:
 
-- Start with an Extended Linear Address record
-- Follow with an undefined record type `0x0A` to include some metadata
+- Starts with an undefined record type `0x0A` to include some metadata
     - This could indicate the block of records is for a specific micro:bit version 
     - Any other record type could be used
     - The data included in this case (`0xDEADC``0``DE`) is just a placeholder
-- Then the original 10 Intel Hex data records
+- Followed by an Extended Linear Address record
+- Then the original 10 data records
+    - micro:bit v1 data uses the standard Intel Hex data record (`0x04`)
+    - micro:bit v2 data uses an undefined record type (TODO: which record has been used in DAPlink-microbit?)
 - End with another undefined record type (`0x0B`)
     - In this case the record type is used only to indicate the block is ending
     - The `0xDEADC``0``DE` data in this case is only used to pad the block to  be 512 bytes long
@@ -76,11 +78,11 @@ So this block of 10 Intel Hex data records:
 :10009000B7010000C1010000CB010000D501000044
 ```
 
-Becomes:
+Becomes for micro:bit v1:
 
 ```
-:020000040000FA
 :0400000ADEADC0DEC9
+:020000040000FA
 :10000000C0070000D1060000D1000000B1060000CA
 :1000100000000000000000000000000000000000E0
 :100020000000000000000000000000005107000078
@@ -94,9 +96,15 @@ Becomes:
 :0C00000BDEADC0DEDEADC0DEDEADC0DE6E
 ```
 
+Becomes for micro:bit v2:
+
+```
+TODO: Define v2 data record type, update tool and get output.
+```
+
 This format can still be tweaked:
 
-- The first metadata record could be the first line, and the Extended Linear Address record the second line
 - The first metadata record could be longer to contain more data
 - Currently there isn’t any metadata wrapping the end of file record
+    - This is likely going to stay this way, as the current spec only needs a single EoF record in the file
 - Additional unused records can be used to included other types of data

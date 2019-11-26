@@ -25,12 +25,13 @@ Our current proposition contains data in this order in 512-byte blocks:
 
 - micro:bit v1 flash data
 - micro:bit v1 UICR data
-- End-of-file record 
 - micro:bit v2 flash data
 - micro:bit v2 UICR data
-- End-of-file record 
+- End-of-file record
 
 This format:
+
+TODO: Confirm this format works for DAPLink 0234 and update the text below
 
 - Works on micro:bit v1 DAPLink versions 0241 and newer
     - The undefined record types are ignored
