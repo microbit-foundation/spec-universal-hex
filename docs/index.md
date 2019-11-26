@@ -1,5 +1,7 @@
 # 🍔 micro:bit Fat Binaries
 
+Specification version 0.1.0.
+
 ## Goal
 
 The goal of a micro:bit fat binaries is to be able to create a single file-format that can be flashed into a micro:bit v1 and a micro:bit v2 successfully.
@@ -25,11 +27,11 @@ While the nature of the v1.5 hex file is fixed by the requirements of the existi
 - shall: mandatory feature
 - should: desired feature
 
-1. The fat-binary file shall flash correctly in a micro:bit v2 with any version of DAPLink shipped after P1 prototype
+1. The fat-binary file shall flash correctly in a micro:bit v2 with any version of DAPLink shipped after P2 prototypes
 2. The fat-binary file shall flash correctly on a micro:bit v1 with DAPLink v0241 or newer
 3. The fat-binary file should flash correctly on a micro:bit v1 with DAPLink v0234
 4. The fat-binary file flash time should be similar (+/- 10%) than the same microbit-v1-only hex file
-5. The v2 DAPLink interface shall also consume ‘standard’ hex and bin files for micro:bit v2 (eg produced by Mbed or other tools)
+5. The micro:bit v2 DAPLink interface shall also consume ‘standard’ hex and bin files for micro:bit v2 (eg produced by Mbed or other tools)
 
 ## DAPLink Interface Versions Shipped
 

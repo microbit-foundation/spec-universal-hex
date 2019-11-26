@@ -1,5 +1,7 @@
 # micro:bit Fat Binaries Format
 
+Specification version 0.1.0.
+
 ## Intel Hex Record Types
 
 In all the DAPLink versions we’ve tested DAPLink ignores any Intel Hex record with an unrecognised record type.
