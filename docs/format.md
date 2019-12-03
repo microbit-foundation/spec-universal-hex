@@ -52,24 +52,25 @@ P * 512 byte "hex blocks" for micro:bit v2 each containing
     10 * Mbv2 Data records (`0x0D`) of 16 bytes
     Block end record (`0x0B`) with padding data
 }
-End of file record/block (512 bytes, or compacted with previous block?)
+End of file record
 ```
 
-As a proof-of-concept, a Python script has been used to convert a 'standard' micro:bit v1 Intel Hex file.
+As a proof-of-concept, a Python script has been used to convert a 'standard' Intel Hex file.
 It breaks it down into blocks of 10 records with 16 bytes of data each (the original data records were 16 bytes already), and modifies each block to contain the following:
 
-- Starts with Block Start custom record type `0x0A` to include some metadata
-    - The data included in this case (`0xDEADC0DE`) is just a place-holder
-    - The metadata should indicate the micro:bit version for the block
-- Followed by an Extended Linear Address record
-- Then the original 10 data records
-    - micro:bit v1 data uses the standard Intel Hex data record (`0x00`)
-    - micro:bit v2 data uses Mbv2 Data custom record type (`0D`)
-- If the last block contains less than 10 data records it will add Padded Data records (`0x0C`)
-- End with Block End custom record type (`0x0B`)
-    - This type is used only to indicate the block is ending
-    - The `0xDEADC0DE` data is only used to pad the block to  be 512 bytes long
-- An end-of-file record can be included in the last 512 byte block of data
+- For each block of 10 data records:
+    - Starts with Block Start custom record type `0x0A` to include some metadata
+        - The data included in this case (`0xDEADC0DE`) is just a place-holder
+        - The metadata should indicate the micro:bit version for the block
+    - Followed by an Extended Linear Address record
+    - Then the original 10 data records
+        - micro:bit v1 data uses the standard Intel Hex data record (`0x00`)
+        - micro:bit v2 data uses Mbv2 Data custom record type (`0D`)
+    - If the last block contains less than 10 data records it will add Padded Data records (`0x0C`)
+    - Ends with Block End custom record type (`0x0B`)
+        - This type is used only to indicate the block is ending
+        - The `0xDEADC0DE` data is only used to pad the block to be 512 bytes long
+- The last 512-byte block is followed by an End Of File record and a new line
 
 So this block of micro:bit v1 10 Intel Hex data records:
 
@@ -137,7 +138,7 @@ Becomes for micro:bit v2:
 :0C00000BDEADC0DEDEADC0DEDEADC0DE6E
 ```
 
-And the last data block with an EoF record (`:00000001FF`) would look like this:
+And an EoF record (`:00000001FF`) after the last block would look like this:
 
 ```
 :0400000A02ADC0DEA5
@@ -150,17 +151,15 @@ And the last data block with an EoF record (`:00000001FF`) would look like this:
 :1000500DE7050000F1050000FB05000005060000A6
 :1000600D0F06000019060000230600002D060000F3
 :1000700D37060000410600004B0600005506000043
-:00000001FF
-:1000000CDEADC0DEDEADC0DEDEADC0DEDEADC0DE40
-:0A00000CDEADC0DEDEADC0DEDEAD0D
+:1000800D5F06000069060000730600007D06000093
+:1000900D87060000910600009B060000A5060000E3
 :0C00000BDEADC0DEDEADC0DEDEADC0DE6E
-```
+:00000001FF
 
+```
 
 This format can still be tweaked:
 
 - The first metadata record could be longer to contain more data
-- Then End Of Data record is included in the last block of the file and could be extracted to it's own block
-    - Or if it truly is the end of the file it might not need to be in a 512-byte block
 - Additional unused records can be used to included other types of data or metadata
     - Preferably we should include all metadata in the Block Start record, to reserve the rest of the record types
