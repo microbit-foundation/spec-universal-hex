@@ -1,6 +1,6 @@
 # micro:bit Fat Binaries Format
 
-Specification version 0.2.0.
+Specification version 0.3.0.
 
 ## Intel Hex Record Types
 
@@ -23,6 +23,7 @@ For this reason the first record of each block will be an Extended Linear Addres
 | `0x0B`   | Block End   | Last record in a 512-byte block |
 | `0x0C`   | Padded Data | Used to pad the block to the 512-bytes size, content can be discarded |
 | `0x0D`   | Custom Data | Follows the same format as a normal data record (`0x00`), but contains data for this "Block Type" that will be ignored by older versions of DAPLink|
+| `0x0E`   | Other Data  | For other tools to embed additional data, to be ignored by DAPLink |
 
 ## Block Type
 

@@ -1,6 +1,6 @@
 # 🍔 micro:bit Fat Binaries
 
-Specification version 0.2.0.
+Specification version 0.3.0.
 
 ## Goal
 
