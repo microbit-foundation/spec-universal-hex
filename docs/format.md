@@ -5,7 +5,7 @@ Specification version 0.2.0.
 ## Intel Hex Record Types
 
 In all the DAPLink versions we’ve [tested](tests.md) DAPLink ignores any Intel Hex record with an unrecognised record type.
-We can use this to our advantage to pack micro:bit v2 data in unused record types that will be ignored in the deployed versions of DAPLink for micro:bit v1, and correctly processed in DAPLink for micro:bit v2.
+We can use this to our advantage to pack micro:bit v2 data in unused record types that will be ignored in the deployed versions of DAPLink for micro:bit v1, and will be correctly processed in DAPLink for micro:bit v2.
 
 ## 512 Byte Blocks
 
@@ -71,13 +71,13 @@ As a proof-of-concept, a Python script has been used to convert a 'standard' Int
 It breaks it down into blocks of 10 records with 16 bytes of data each (the original data records were 16 bytes already), and modifies each block to contain the following:
 
 - For each block of 10 data records:
-    - Starts with Block Start custom record type `0x0A` and includes the "Block Type"
-        - The last 4 bytes of the data field (`0xC0DE`) is just a place-holder
+    - Starts with an Extended Linear Address record
+    - Followed by a Block Start custom record type `0x0A` and includes the "Block Type"
+        - The last 4 bytes of the data field (`0xC0DE`) are just a place-holder
         - The metadata should indicate the micro:bit version for the block
-    - Followed by an Extended Linear Address record
     - Then the original 10 data records
         - micro:bit v1 data uses the standard Intel Hex data record (`0x00`)
-        - micro:bit v2 data uses Mbv2 Data custom record type (`0D`)
+        - Data for any other board, like the micro:bit v2, uses the Custom Data record type (`0D`)
     - If the last block contains less than 10 data records it will add Padded Data records (`0x0C`)
     - Ends with Block End custom record type (`0x0B`)
         - This type is used only to indicate the block is ending
