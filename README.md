@@ -1,3 +1,3 @@
-# micro:bit Fat Binaries
+# micro:bit Universal Hex
 
-Documentation, tools, and reference implementation for micro:bit fat binaries.
+Documentation, tools, and reference implementation for micro:bit Universal Hex.
