@@ -1,4 +1,4 @@
-# Discouraged Format
+# Deprecated Format
 
 The [format](format.md) document contains the latest version of the Universal
 Hex format that should be used.
