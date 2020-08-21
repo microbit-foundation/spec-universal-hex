@@ -1,45 +1,106 @@
-# micro:bit Fat Binaries Format
+# micro:bit Universal Hex Format
 
-Specification version 0.3.0.
+Specification version 0.4.0.
 
-## Intel Hex Record Types
+
+## Intel Hex and Universal Hex
+
+The micro:bit Universal Hex format is a superset of the [Intel Hex file format](https://en.wikipedia.org/wiki/Intel_HEX) designed to be able to include data for multiple targets into a single file.
 
 In all the DAPLink versions we’ve [tested](tests.md) DAPLink ignores any Intel Hex record with an unrecognised record type.
-We can use this to our advantage to pack micro:bit v2 data in unused record types that will be ignored in the deployed versions of DAPLink for micro:bit v1, and will be correctly processed in DAPLink for micro:bit v2.
+The only exception is the first line of the hex file, which needs to be a valid Intel Hex record, or the entire file is discarded.
 
-## 512 Byte Blocks
+This can be used to our advantage to pack micro:bit v2 data within unused record types that will be ignored in the deployed versions of DAPLink for micro:bit v1, and will be correctly processed in DAPLink for micro:bit v2.
 
-USB packs and sends data in blocks of 512 bytes, in the case of out-of-order blocks, it would be useful to create a format that contains self-contained 512-byte blocks with metadata.
-Furthermore, by making the first part of each 512-byte block contain header information, we can parse this and ‘throw away’ bocks not useful for the device we’re on.
+The Universal Hex format builds on top of the Intel Hex format, and creates new records with un-used record type values.
 
-Unfortunately all version of DAPLink (up to version 0254 at the time of writing) will try to validate the first line of the Intel Hex file. If the record type in that line does not correspond to a valid Intel Hex record type (`0x00` to `0x05`), it will fail validation and the file won't be processed.
-For this reason the first record of each block will be an Extended Linear Address record (`0x04`), and the second record will contain the block metadata.
+### New Record Types
 
-## New Record Types
+| Hex Code | Record Type | Data Length |Description |
+|----------|-------------|-------------|-------------|
+| `0x0A`   | Block Start | 2+ | Second record in a section/block, includes a "Data Type" ID in the data field |
+| `0x0B`   | Block End   | 0+ | Last record in a section/block, can include padding data to be ignored|
+| `0x0C`   | Padded Data | 0+ | Used to pad the section/block to the required alignment, data field content will be ignored |
+| `0x0D`   | Custom Data | 0+ | Follows the same format as a normal data record (`0x00`), but contains data for the "Data Type" indicated in the Block Start record |
+| `0x0E`   | Other Data  | 0+ | For other tools to embed additional data, to be ignored by DAPLink |
 
-| Hex Code | Record Type | Description |
-|----------|-------------|-------------|
-| `0x0A`   | Block Start | Second record in a 512-byte block, includes a "Block Type" ID in the data field |
-| `0x0B`   | Block End   | Last record in a 512-byte block |
-| `0x0C`   | Padded Data | Used to pad the block to the 512-bytes size, content can be discarded |
-| `0x0D`   | Custom Data | Follows the same format as a normal data record (`0x00`), but contains data for this "Block Type" that will be ignored by older versions of DAPLink|
-| `0x0E`   | Other Data  | For other tools to embed additional data, to be ignored by DAPLink |
+#### Block Type
 
-## Block Type
+The `Block Start` record contains metadata to identify the kind of data contained in the subsequent Data (`0x00`) or Custom Data (`0x0D`) records.
 
-The `Block Start` record contains metadata to identify what kind of data there is in this block.
+The data field for this record has a minimum size of 2 bytes. The valid values for these two bytes are:
 
-| Hex Code | Block Type   | Description |
+| Hex Code | Data Type    | Description |
 |----------|--------------|-------------|
-| `0x9901` | micro:bit v1 | Contains data for micro:bit v1 |
+| `0x9900` | micro:bit v1 | Contains data for micro:bit v1 |
 | `0x9903` | micro:bit v2 | Contains data for micro:bit v2 |
 
-## Intel Hex Block Format Proposition
+Additional data bytes can be included but will be ignored by DAPLink.
 
-Conventional hex:
+
+## Block/Section Format
+
+There are two valid formats for packing the v1 and v2 records:
+
+- 512 Byte Blocks
+- 512 Byte Aligned Sections (recommended format)
+
+USB packs and sends data in blocks of 512 bytes. As the DAPLink MSD drive could receive the hex file blocks out-of-order, it would be useful to create a format that contains self-contained 512-byte blocks with metadata.
+
+Previous versions of this specification only defined the format described in the "512 Byte Blocks" section, but testing showed DAPLink 0234 was significantly slower to process this format.
+For this reason the "512 Byte Aligned Sections" format was introduced and **is the recommended format** to use at the time of writing.
+
+Receiving blocks out-of-order has not been an issue yet, but in case this becomes a problem in the future (e.g. an operating system update introduces this change), DAPLink will remain compatible with the "512 Byte Blocks" format, so that any online editors could switch to it without having to update the micro:bit firmware.
+
+### 512 Byte Blocks
+
+> **This format is for future use only. The "512 Byte Aligned Sections" format should be used instead**.
+
+This format can be found in the [format-discouraged.md](format-discouraged.md) document, and while it is supported by DAPLink, it use is discouraged.
+
+### 512 Byte Aligned Sections
+
+DAPLink 0234 is very slow flashing Universal Hex files with the 512 byte block format.
+This is caused by having an Extended Linear Address record present on each block.
+
+Removing the Extended Linear Address record to reduce the flashing time makes the format susceptible to issues caused by file blocks arriving out of order.
+So, if the blocks are no longer self contained and the file format depends on the blocks arriving in order, we can reduce the total file size by only adding the metadata record once per board "section", therefore reducing the flashing time even further.
+
+A "section" in this format includes all the Data and Extended Linear Address records a specific target. So a Universal Hex will have a micro:bit v1 section, and a v2 section.
+
+To ensure a USB 512-byte block doesn't contain data for two targets, each section must be 512-byte aligned.
+
+So, each target section:
+- Is 512-byte aligned
+- Starts with an Extended Linear Address record
+- Followed by a Block Start custom record (`0x0A`)
+    - This record type includes the target metadata in the Data field
+- Then it includes all the data and Extended Linear Address (`0x04`) records for the target
+    - micro:bit v1 data uses the standard Intel Hex data record (`0x00`)
+    - Data for any other board, like the micro:bit v2, uses the Custom Data record type (`0x0D`)
+    - Extended Segment Address records (`0x03`) are converted to Extended Linear Address (`0x04`) records
+    - Start Segment Address (`0x03`) and Start Linear Address (`0x05`) records are excluded
+- Padded Data records (`0x0C`) can be used to align the end of the section to a 512-byte boundary
+- Ends with Block End custom record (`0x0B`)
+    - This record type is used only to indicate the end of the section
+    - Any data can be added to the Data field to pad the block, as it will be ignored
+
+Note that the End Of File record is excluded from the sections, only one EoF record is include as the last record of the file.
+
+It is also recommended to:
+- Use Data or Custom Data records with 32 bytes in the Data field
+    - The most common Data field sizes are 16 and 32 bytes
+    - Although the Intel Hex format does not limit the data field length, DAPLink has a max length of 32 bytes
+    - Having longer records reduces the overall file size and save up over a second of flashing time
+- Place the micro:bit v1 Section first, followed by the micro:bit v2 Section
+   - DAPLink versions < 255 only halt the target microcontroller when the first flash operation starts, so in the opposite order micro:bit v1 would flash the DAPLink LED a couple of seconds before the user program on the micro:bit stops running
+
+#### Section Format In A Hex File
+
+Conventional Intel Hex for micro:bit v1 or v2:
 
 ```
-Extended Linear Address record
+Extended Linear Address record (optional if the data starts at address 0x0000_xxxx)
 X * Data records of N bytes (typically 16)
 ...
 Extended Linear Address record
@@ -48,119 +109,116 @@ Y * Data records of N bytes (typically 16)
 End of file record
 ```
 
-Proposed fat hex:
+Universal Hex:
 
 ```
-X * 512 byte "hex blocks" for micro:bit v1 each containing
+micro:bit v1 segment, 512-byte aligned
 {
-    Extended Linear Address record
+    Extended Linear Address record (`0x04`)
     Start block record (`0x0A`), with "Block Type" set to "micro:bit v1"
-    10 * normal Data records (`0x00`) of 16 bytes
+    N * Extended Linear Address (`0x04`) or Data records (`0x00`)
+    Optional Padded Data records (`0x0C`) to align to a 512-byte boundary
     Block end record (`0x0B`) with padding data
 }
-P * 512 byte "hex blocks" for micro:bit v2 each containing
+micro:bit v2 segment, 512-byte aligned
 {
-    Extended Linear Address record
+    Extended Linear Address record (`0x04`)
     Start block record (`0x0A`), with "Block Type" set to "micro:bit v2"
-    10 * Custom Data records (`0x0D`) of 16 bytes
-    Block end record (`0x0B`) with padding data
+    N * Extended Linear Address (`0x04`) or Custom Data records (`0x0D`)
+    Optional Padded Data records (`0x0C`) to align to a 512-byte boundary
+    Block end record (`0x0B`) with optional padding data
 }
 End of file record
 ```
 
-As a proof-of-concept, a Python script has been used to convert a 'standard' Intel Hex file.
-It breaks it down into blocks of 10 records with 16 bytes of data each (the original data records were 16 bytes already), and modifies each block to contain the following:
+#### Example
 
-- For each block of 10 data records:
-    - Starts with an Extended Linear Address record
-    - Followed by a Block Start custom record type `0x0A` and includes the "Block Type"
-        - The last 4 bytes of the data field (`0xC0DE`) are just a place-holder
-        - The metadata should indicate the micro:bit version for the block
-    - Then the original 10 data records
-        - micro:bit v1 data uses the standard Intel Hex data record (`0x00`)
-        - Data for any other board, like the micro:bit v2, uses the Custom Data record type (`0D`)
-    - If the last block contains less than 10 data records it will add Padded Data records (`0x0C`)
-    - Ends with Block End custom record type (`0x0B`)
-        - This type is used only to indicate the block is ending
-        - The `0xDEADC0DE` data is only used to pad the block to be 512 bytes long
-- The last 512-byte block is followed by an End Of File record and a new line
-
-So this block of 10 Intel Hex data records:
+So this small Intel Hex file for micro:bit v1:
 
 ```
-:10000000C0070000D1060000D1000000B1060000CA
+:020000040000FA
+:1000000000400020218E01005D8E01005F8E010006
 :1000100000000000000000000000000000000000E0
-:100020000000000000000000000000005107000078
-:100030000000000000000000DB000000E500000000
-:10004000EF000000F9000000030100000D010000B6
-:1000500017010000210100002B0100003501000004
-:100060003F01000049010000530100005D01000054
-:1000700067010000710100007B01000085010000A4
-:100080008F01000099010000A3010000AD010000F4
-:10009000B7010000C1010000CB010000D501000044
+:10002000000000000000000000000000618E0100E0
+:100030000000000000000000638E0100658E0100DA
+:10004000678E01005D3D000065950100678E01002F
+:10005000678E010000000000218F0100678E010003
+:1000600069E80000D59A0100D9930100678E01006C
+:10007000678E0100678E0100678E0100678E0100A8
+:020000040001F9
+:1000000003D13000F8BD4010F3E7331D0122180082
+:10001000F8F7B2FD4460EFE7E4B30200F0B5070083
+:1000200089B000201E000D00019215F0ECFB0E4B74
+:020000041000EA
+:1010C0007CB0EE17FFFFFFFF0A0000000000E30006
+:0C10D000FFFFFFFF2D6D0300000000007B
+:0400000500018E2147
+:00000001FF
 ```
 
-Becomes for micro:bit v1:
+And this small Intel Hex file for micro:bit v2:
+
+```
+:1000000000040020810A000015070000610A0000BA
+:100010001F07000029070000330700000000000050
+:10002000000000000000000000000000A50A000021
+:100030003D070000000000004707000051070000D6
+:100040005B070000650700006F07000079070000EC
+:10005000830700008D07000097070000A10700003C
+:10006000AB070000B5070000BF070000C90700008C
+:020000023000CC
+:10000000440205004A0200003C020500FA0D00000F
+:1000100064020500D20F000034020500B20E000099
+:100020007C020500720D000070020500420B00000A
+:10003000F80405004A0B0000F00405003A0B00002C
+:020000020000FC
+:020000041000EA
+:081014000080070000E0070066
+:1010C0007CB0EE47FFFFFFFF0C0000000000530064
+:0C10D000FFFFFFFF000000000000000018
+:040000033000225156
+:00000001FF
+```
+
+Will transform into this Universal Hex:
 
 ```
 :020000040000FA
-:0400000A9901C0DEBA
-:1000A000DF010000E9010000F3010000FD01000094
-:1000B00007020000110200001B02000025020000E0
-:1000C0001FB5C046C04600F0EFFA04B00FB41FBD24
-:1000D00008205A49096809580847382057490968CB
-:1000E000095808473C2055490968095808474020E5
-:1000F0005249096809580847442050490968095875
-:10010000084748204D490968095808474C204B4981
-:10011000096809580847502048490968095808479C
-:100120005420464909680958084758204349096836
-:10013000095808475C204149096809580847602068
-:0C00000BDEADC0DEDEADC0DEDEADC0DE6E
-```
-
-And for micro:bit v2:
-
-```
+:0400000A9900C0DEBB
+:2000000000400020218E01005D8E01005F8E010000000000000000000000000000000000F6
+:20002000000000000000000000000000618E01000000000000000000638E0100658E0100EA
+:20004000678E01005D3D000065950100678E0100678E010000000000218F0100678E010082
+:2000600069E80000D59A0100D9930100678E0100678E0100678E0100678E0100678E010084
+:020000040001F9
+:2000000003D13000F8BD4010F3E7331D01221800F8F7B2FD4460EFE7E4B30200F0B5070015
+:2000200089B000201E000D00019215F0ECFB0E4B04D8
+:020000041000EA
+:1C10C0007CB0EE17FFFFFFFF0A0000000000E300FFFFFFFF2D6D03000000000061
+:2000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4
+:2000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4
+:2000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4
+:2000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4
+:2000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4
+:2000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4
+:0000000BF5
 :020000040000FA
 :0400000A9903C0DEB8
-:1000A00DDF010000E9010000F3010000FD01000087
-:1000B00D07020000110200001B02000025020000D3
-:1000C00D1FB5C046C04600F0EFFA04B00FB41FBD17
-:1000D00D08205A49096809580847382057490968BE
-:1000E00D095808473C2055490968095808474020D8
-:1000F00D5249096809580847442050490968095868
-:1001000D084748204D490968095808474C204B4974
-:1001100D096809580847502048490968095808478F
-:1001200D5420464909680958084758204349096829
-:1001300D095808475C20414909680958084760205B
-:0C00000BDEADC0DEDEADC0DEDEADC0DE6E
-```
-
-And an EoF record (`:00000001FF\n`) is placed after the last block, so it would look like this:
-
-```
-:020000040000FA
-:0400000A9903C0DEB8
-:1000A00DDF010000E9010000F3010000FD01000087
-:1000B00D07020000110200001B02000025020000D3
-:1000C00D1FB5C046C04600F0EFFA04B00FB41FBD17
-:1000D00D08205A49096809580847382057490968BE
-:1000E00D095808473C2055490968095808474020D8
-:1000F00D5249096809580847442050490968095868
-:1001000D084748204D490968095808474C204B4974
-:1001100D096809580847502048490968095808478F
-:1001200D5420464909680958084758204349096829
-:1001300D095808475C20414909680958084760205B
-:0C00000BDEADC0DEDEADC0DEDEADC0DE6E
+:2000000D00040020810A000015070000610A00001F0700002907000033070000000000000D
+:2000200D000000000000000000000000A50A00003D0700000000000047070000510700001A
+:2000400D5B070000650700006F07000079070000830700008D07000097070000A10700006B
+:2000600DAB070000B5070000BF070000C9070000CB
+:020000023000CC
+:2000000D440205004A0200003C020500FA0D000064020500D20F000034020500B20E0000AB
+:2000200D7C020500720D000070020500420B0000F80405004A0B0000F00405003A0B000059
+:020000041000EA
+:0810140D0080070000E0070059
+:1C10C00D7CB0EE47FFFFFFFF0C00000000005300FFFFFFFF00000000000000004F
+:2000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4
+:2000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4
+:2000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4
+:2000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4
+:2000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4
+:0000000BFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5
 :00000001FF
 
 ```
-
-This format can still be tweaked:
-
-- The "Block Start" record could be extended to include more metadata in the data field
-- Additional unused records can be used to included other types of data or metadata
-    - Preferably we should include all metadata in the "Block Start" record, to reserve the rest of the record types
-- The "Block End" record is not currently used and is simply ignored in DAPLink
-    - Updating DAPLink to read this record before flashing the block might be to intrusive, so might remove this record type
-    - To mitigate partial blocks we could only flash "Custom data" records if there was a "Block Start" record in the same block
