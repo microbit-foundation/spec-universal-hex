@@ -8,9 +8,9 @@ Specification version 0.4.0.
 The micro:bit Universal Hex format is a superset of the [Intel Hex file format](https://en.wikipedia.org/wiki/Intel_HEX) designed to be able to include data for multiple targets into a single file.
 
 In all the DAPLink versions we’ve [tested](tests.md) DAPLink ignores any Intel Hex record with an unrecognised record type.
-The only exception is the first line of the hex file, which needs to be a valid Intel Hex record, or the entire file is discarded.
+The only exception is the first line of the hex file, which needs to be a valid Intel Hex record, otherwise the entire file is discarded.
 
-This can be used to our advantage to pack micro:bit v2 data within unused record types that will be ignored in the deployed versions of DAPLink for micro:bit v1, and will be correctly processed in DAPLink for micro:bit v2.
+This can be used to our advantage to pack micro:bit V2 data within unused record types that will be ignored in the deployed versions of DAPLink for micro:bit V1, and will be correctly processed in DAPLink for micro:bit V2.
 
 The Universal Hex format builds on top of the Intel Hex format, and creates new records with un-used record type values.
 
@@ -32,15 +32,15 @@ The data field for this record has a minimum size of 2 bytes. The valid values f
 
 | Hex Code | Data Type    | Description |
 |----------|--------------|-------------|
-| `0x9900` | micro:bit v1 | Contains data for micro:bit v1 |
-| `0x9903` | micro:bit v2 | Contains data for micro:bit v2 |
+| `0x9900` | micro:bit V1 | Contains data for micro:bit V1 |
+| `0x9903` | micro:bit V2 | Contains data for micro:bit V2 |
 
 Additional data bytes can be included but will be ignored by DAPLink.
 
 
 ## Block/Section Format
 
-There are two valid formats for packing the v1 and v2 records:
+There are two valid formats for packing the V1 and V2 records:
 
 - 512 Byte Blocks
 - 512 Byte Aligned Sections (recommended format)
@@ -66,7 +66,7 @@ This is caused by having an Extended Linear Address record present on each block
 Removing the Extended Linear Address record to reduce the flashing time makes the format susceptible to issues caused by file blocks arriving out of order.
 So, if the blocks are no longer self contained and the file format depends on the blocks arriving in order, we can reduce the total file size by only adding the metadata record once per board "section", therefore reducing the flashing time even further.
 
-A "section" in this format includes all the Data and Extended Linear Address records a specific target. So a Universal Hex will have a micro:bit v1 section, and a v2 section.
+A "section" in this format includes all the Data and Extended Linear Address records a specific target. So a Universal Hex will have a micro:bit V1 section, and a V2 section.
 
 To ensure a USB 512-byte block doesn't contain data for two targets, each section must be 512-byte aligned.
 
@@ -76,8 +76,8 @@ So, each target section:
 - Followed by a Block Start custom record (`0x0A`)
     - This record type includes the target metadata in the Data field
 - Then it includes all the data and Extended Linear Address (`0x04`) records for the target
-    - micro:bit v1 data uses the standard Intel Hex data record (`0x00`)
-    - Data for any other board, like the micro:bit v2, uses the Custom Data record type (`0x0D`)
+    - micro:bit V1 data uses the standard Intel Hex data record (`0x00`)
+    - Data for any other board, like the micro:bit V2, uses the Custom Data record type (`0x0D`)
     - Extended Segment Address records (`0x03`) are converted to Extended Linear Address (`0x04`) records
     - Start Segment Address (`0x03`) and Start Linear Address (`0x05`) records are excluded
 - Padded Data records (`0x0C`) can be used to align the end of the section to a 512-byte boundary
@@ -92,12 +92,12 @@ It is also recommended to:
     - The most common Data field sizes are 16 and 32 bytes
     - Although the Intel Hex format does not limit the data field length, DAPLink has a max length of 32 bytes
     - Having longer records reduces the overall file size and save up over a second of flashing time
-- Place the micro:bit v1 Section first, followed by the micro:bit v2 Section
-   - DAPLink versions < 255 only halt the target microcontroller when the first flash operation starts, so in the opposite order micro:bit v1 would flash the DAPLink LED a couple of seconds before the user program on the micro:bit stops running
+- Place the micro:bit V1 Section first, followed by the micro:bit V2 Section
+   - DAPLink versions < 255 only halt the target microcontroller when the first flash operation starts, so in the opposite order micro:bit V1 would flash the DAPLink LED a couple of seconds before the user program on the micro:bit stops running
 
 #### Section Format In A Hex File
 
-Conventional Intel Hex for micro:bit v1 or v2:
+Conventional Intel Hex for micro:bit V1 or V2:
 
 ```
 Extended Linear Address record (optional if the data starts at address 0x0000_xxxx)
@@ -112,18 +112,18 @@ End of file record
 Universal Hex:
 
 ```
-micro:bit v1 section, 512-byte aligned
+micro:bit V1 section, 512-byte aligned
 {
     Extended Linear Address record (`0x04`)
-    Start block record (`0x0A`), with "Block Type" set to "micro:bit v1"
+    Start block record (`0x0A`), with "Block Type" set to "micro:bit V1"
     N * Extended Linear Address (`0x04`) or Data records (`0x00`)
     Optional Padded Data records (`0x0C`) to align to a 512-byte boundary
     Block end record (`0x0B`) with padding data
 }
-micro:bit v2 section, 512-byte aligned
+micro:bit V2 section, 512-byte aligned
 {
     Extended Linear Address record (`0x04`)
-    Start block record (`0x0A`), with "Block Type" set to "micro:bit v2"
+    Start block record (`0x0A`), with "Block Type" set to "micro:bit V2"
     N * Extended Linear Address (`0x04`) or Custom Data records (`0x0D`)
     Optional Padded Data records (`0x0C`) to align to a 512-byte boundary
     Block end record (`0x0B`) with optional padding data
@@ -133,7 +133,7 @@ End of file record
 
 #### Example
 
-So this small Intel Hex file for micro:bit v1:
+So this small Intel Hex file for micro:bit V1:
 
 ```
 :020000040000FA                              <- Extended Linear Address record
@@ -156,7 +156,7 @@ So this small Intel Hex file for micro:bit v1:
 :00000001FF                                  <- End Of File record
 ```
 
-And this small Intel Hex file for micro:bit v2:
+And this small Intel Hex file for micro:bit V2:
 
 ```
 :1000000000040020810A000015070000610A0000BA  <- Data records
