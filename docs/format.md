@@ -48,7 +48,7 @@ There are two valid formats for packing the V1 and V2 records:
 USB packs and sends data in blocks of 512 bytes. As the DAPLink MSD drive could receive the hex file blocks out-of-order, it would be useful to create a format that contains self-contained 512-byte blocks with metadata.
 
 Previous versions of this specification only defined the format described in the "512 Byte Blocks" section, but testing showed DAPLink 0234 was significantly slower to process this format.
-For this reason the "512 Byte Aligned Sections" format was introduced and **is the recommended format** to use at the time of writing.
+For this reason the "512 Byte Aligned Sections" format was introduced and **is the currently recommended format**.
 
 Receiving blocks out-of-order has not been an issue yet, but in case this becomes a problem in the future (e.g. an operating system update introduces this change), DAPLink will remain compatible with the "512 Byte Blocks" format, so that any online editors could switch to it without having to update the micro:bit firmware.
 
@@ -66,7 +66,7 @@ This is caused by having an Extended Linear Address record present on each block
 Removing the Extended Linear Address record to reduce the flashing time makes the format susceptible to issues caused by file blocks arriving out of order.
 So, if the blocks are no longer self contained and the file format depends on the blocks arriving in order, we can reduce the total file size by only adding the metadata record once per board "section", therefore reducing the flashing time even further.
 
-A "section" in this format includes all the Data and Extended Linear Address records a specific target. So a Universal Hex will have a micro:bit V1 section, and a V2 section.
+A "section" in this format includes all the Data and Extended Linear Address records for a specific target. So a Universal Hex will have a micro:bit V1 section, and a V2 section.
 
 To ensure a USB 512-byte block doesn't contain data for two targets, each section must be 512-byte aligned.
 
@@ -219,6 +219,6 @@ Will transform into this Universal Hex:
 :2000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4   |
 :2000000CFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4   |
 :1600000BFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5                      <- Block End record with padding
-:00000001FF                                                                  <- End Of File record
+:00000001FF                                                                  <- End Of File record with a new line
 
 ```
