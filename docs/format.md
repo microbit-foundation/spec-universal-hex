@@ -112,7 +112,7 @@ End of file record
 Universal Hex:
 
 ```
-micro:bit v1 segment, 512-byte aligned
+micro:bit v1 section, 512-byte aligned
 {
     Extended Linear Address record (`0x04`)
     Start block record (`0x0A`), with "Block Type" set to "micro:bit v1"
@@ -120,7 +120,7 @@ micro:bit v1 segment, 512-byte aligned
     Optional Padded Data records (`0x0C`) to align to a 512-byte boundary
     Block end record (`0x0B`) with padding data
 }
-micro:bit v2 segment, 512-byte aligned
+micro:bit v2 section, 512-byte aligned
 {
     Extended Linear Address record (`0x04`)
     Start block record (`0x0A`), with "Block Type" set to "micro:bit v2"
