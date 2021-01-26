@@ -1,4 +1,4 @@
-# micro:bit Universal Hex
+# micro:bit Universal Hex Specification
 
 Documentation for micro:bit Universal Hex format.
 
