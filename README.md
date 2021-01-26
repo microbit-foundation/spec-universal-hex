@@ -13,7 +13,7 @@ The specification of this format can be found in the [spec](spec) folder.
 You can implement the specification contained in this repository to add
 support for Universal Hex in your project.
 
-There is currently one one implementation in TypeScript:
+There is currently only one implementation in TypeScript:
 - https://github.com/microbit-foundation/microbit-universal-hex
 
 
