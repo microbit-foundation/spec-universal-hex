@@ -5,7 +5,7 @@ Documentation for micro:bit Universal Hex format.
 
 ## Specification
 
-The specification of this format can be found in the [docs](docs) folder.
+The specification of this format can be found in the [spec](spec) folder.
 
 
 ## Implementations
