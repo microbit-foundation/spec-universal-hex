@@ -1,4 +1,4 @@
-"""Script to generate hex files for testing mb1 and mbnext fat binaries.
+"""Script to generate hex files for testing mb1 and mbnext universal hex.
 
 This code is not properly tested and will need more attention and clean up.
 """
