@@ -52,6 +52,8 @@ For this reason the "512 Byte Aligned Sections" format was introduced and **is t
 
 Receiving blocks out-of-order has not been an issue yet, but in case this becomes a problem in the future (e.g. an operating system update introduces this change), DAPLink will remain compatible with the "512 Byte Blocks" format, so that any online editors could switch to it without having to update the micro:bit firmware.
 
+In both formats a Universal Hex must contain data for at least 2 targets, one for micro:bit V1, one for micro:bit V2, and any additional targets are optional. This is required because if DAPLink processes a file without data for its own target it will throw a hard to understand error.
+
 ### 512 Byte Blocks
 
 > **This format is for future use only. The "512 Byte Aligned Sections" format should be used instead**.
