@@ -1,3 +1,13 @@
+---
+layout: page
+title: Universal Hex Format Specification
+heading: Universal Hex Format Specification
+description: Specification for the micro:bit Universal Hex Format
+permalink: /software/spec-universal-hex
+ref: spec-universal-hex
+lang: en
+---
+
 # 🌌 micro:bit Universal Hex Format Specification
 
 Specification version 0.4.0.
