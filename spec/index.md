@@ -1,3 +1,13 @@
+---
+layout: page
+title: Universal Hex Format Specification
+heading: Universal Hex Format Specification
+description: Specification for the micro:bit Universal Hex Format
+permalink: /software/spec-universal-hex
+ref: spec-universal-hex
+lang: en
+---
+
 # 🌌 micro:bit Universal Hex Format Specification
 
 Specification version 0.4.0.
@@ -113,7 +123,7 @@ In both formats a Universal Hex must contain data for at least 2 targets, one fo
 
 > **This format is for future use only. The "512 Byte Aligned Sections" format should be used instead**.
 
-This format can be found in the [format-deprecated.md](format-deprecated.md) document, and while it is supported by DAPLink, it use is discouraged.
+This format can be found in the [format-deprecated.md](https://github.com/microbit-foundation/spec-universal-hex/blob/master/spec/format-deprecated.md) document, and while it is supported by DAPLink, it use is discouraged.
 
 ### 512 Byte Aligned Sections
 
