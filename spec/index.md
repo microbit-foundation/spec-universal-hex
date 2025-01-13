@@ -10,27 +10,36 @@ lang: en
 
 # 🌌 micro:bit Universal Hex Format Specification
 
-Specification version 0.4.0.
+Specification version 1.0.0.
+
+- [Goal](#goal)
+- [Definitions and Rationale](#definitions-and-rationale)
+- [Requirements](#requirements)
+- [DAPLink Versions Previously Shipped](#daplink-versions-previously-shipped)
+- [Intel Hex and Universal Hex relationship](#intel-hex-and-universal-hex-relationship)
+- [Universal Hex New Record Types](#universal-hex-new-record-types)
+- [Universal Hex Block/Section Format](#universal-hex-blocksection-format)
+- [Doc Updates](#doc-updates)
 
 
 ## Goal
 
-The goal of a micro:bit Universal Hex is to be able to create a single-file format that can be flashed into a micro:bit V1 and a micro:bit V2 successfully.
+The goal of the micro:bit Universal Hex specification is to enable the creation of a single hex file that can be flashed into a micro:bit V1 and a micro:bit V2 successfully.
 
 
 ## Definitions and Rationale
 
 <img align="right" src="https://tech.microbit.org/docs/software/spec-universal-hex/spec/img/universal-hex.png" alt="universal hex">
 
-Universal Hex is a superset of the Intel Hex file format to be able to contain binary code for multiple micro:bit boards or subsystems.
+Universal Hex is a superset of the Intel Hex file format to be able to contain data for multiple micro:bit boards or subsystems.
 
 The microcontroller used in the micro:bit V2 (nRF52) is different than the microcontroller used in micro:bit V1 (nRF51), with a different architecture (Arm Cortex M0+ vs Cortex M4), slightly different peripherals, and different hardware components on the board.
 
-The micro:bit V1 and V2 boards use an interface chip with the DAPLink firmware to flash the target microcontroller. DAPLink is responsible for processing the files dropped into the micro:bit MSD drive and any new file format has to be implemented in that project.
+The micro:bit V1 and V2 boards use an interface chip with the DAPLink firmware to flash the target microcontroller. DAPLink is responsible for processing the files dropped into the `MICROBIT` MSD drive and any new file format has to be implemented in this project.
 
-To easily support our users, we want the online editors to generate a single file that will work in both micro:bit V1 and micro:bit V2.
+To easily support the micro:bit users, the online editors should generate a single file that will work in both micro:bit V1 and micro:bit V2.
 
-Therefore, a micro:bit Universal Hex is a file that contains the binary data for both micro:bit V1 and micro:bit V2, in a format that the DAPLink can process to only write to memory the data relevant to its board.
+Therefore, a micro:bit Universal Hex is a file that contains the user programmes for both micro:bit V1 and micro:bit V2, in a format that DAPLink can process to only write to memory the data relevant to its board.
 
 
 ## Requirements
@@ -44,7 +53,7 @@ Therefore, a micro:bit Universal Hex is a file that contains the binary data for
 5. The micro:bit v2 DAPLink interface shall also consume ‘standard’ Intel Hex and bin files for micro:bit V2 (eg produced by Mbed or other tools)
 
 
-## DAPLink Interface Versions Shipped
+## DAPLink Versions Previously Shipped
 
 - 0234: Version shipped in the original BBC drop, over 800K units with this version
 - 0241: Version shipped in the v1.3B retail version
@@ -71,7 +80,7 @@ Conclusions about DAPLink versions:
 
 The micro:bit Universal Hex format is a superset of the [Intel Hex file format](https://en.wikipedia.org/wiki/Intel_HEX) designed to be able to include data for multiple targets into a single file.
 
-In all the DAPLink versions we’ve tested DAPLink ignores any Intel Hex record with an unrecognised record type.
+In all the DAPLink versions tested DAPLink ignores any Intel Hex record with an unrecognised record type.
 The only exception is the first line of the hex file, which needs to be a valid Intel Hex record, otherwise the entire file is discarded.
 
 This can be used to our advantage to pack micro:bit V2 data within unused record types that will be ignored in the deployed versions of DAPLink for micro:bit V1, and will be correctly processed in DAPLink for micro:bit V2.
@@ -97,10 +106,10 @@ The data field for this record has a minimum size of 2 bytes. The valid values f
 
 | Hex Code | Data Type    | Description |
 |----------|--------------|-------------|
-| `0x9900` | micro:bit V1 | Contains data for micro:bit V1 |
-| `0x9903` | micro:bit V2 | Contains data for micro:bit V2 |
+| `0x9900` | micro:bit V1 | Section/block contains data, in data records (`0x00`), for micro:bit V1 |
+| `0x9903` | micro:bit V2 | Section/blopck contains data, in custom data records (`0x0D`),  for micro:bit V2 |
 
-Additional data bytes can be included but will be ignored by DAPLink.
+Including additional data bytes in this record will currently be ignored by DAPLink, but are reserved for future development.
 
 
 ## Universal Hex Block/Section Format
@@ -110,9 +119,9 @@ There are two valid formats for packing the V1 and V2 records:
 - 512 Byte Blocks
 - 512 Byte Aligned Sections (recommended format)
 
-USB packs and sends data in blocks of 512 bytes. As the DAPLink MSD drive could receive the hex file blocks out-of-order, it would be useful to create a format that contains self-contained 512-byte blocks with metadata.
+USB packs and sends data in blocks of 512 bytes. As the DAPLink MSD drive could receive the hex file blocks out-of-order, it is useful to create a format that contains self-contained 512-byte blocks with metadata.
 
-Previous versions of this specification only defined the format described in the "512 Byte Blocks" section, but testing showed DAPLink 0234 was significantly slower to process this format.
+Previous versions of this specification only defined the "512 Byte Blocks" format, but testing showed DAPLink 0234 was significantly slower to process these files.
 For this reason the "512 Byte Aligned Sections" format was introduced and **is the currently recommended format**.
 
 Receiving blocks out-of-order has not been an issue yet, but in case this becomes a problem in the future (e.g. an operating system update introduces this change), DAPLink will remain compatible with the "512 Byte Blocks" format, so that any online editors could switch to it without having to update the micro:bit firmware.
@@ -123,7 +132,7 @@ In both formats a Universal Hex must contain data for at least 2 targets, one fo
 
 > **This format is for future use only. The "512 Byte Aligned Sections" format should be used instead**.
 
-This format can be found in the [format-deprecated.md](https://github.com/microbit-foundation/spec-universal-hex/blob/master/spec/format-deprecated.md) document, and while it is supported by DAPLink, it use is discouraged.
+This format can be found in the [format-deprecated.md](https://github.com/microbit-foundation/spec-universal-hex/blob/master/spec/format-deprecated.md) document, and while it is supported by DAPLink, its use is discouraged.
 
 ### 512 Byte Aligned Sections
 
@@ -141,8 +150,8 @@ So, each target section:
 - Is 512-byte aligned
 - Starts with an Extended Linear Address record
 - Followed by a Block Start custom record (`0x0A`)
-    - This record type includes the target metadata in the Data field
-- Then it includes all the data and Extended Linear Address (`0x04`) records for the target
+    - This record includes "Data Type" in the Data field to identified the targetted micro:bit version
+- Then it includes all the Data (`0x00`) or Custom Data (`0x0D`), and Extended Linear Address (`0x04`) records for the target
     - micro:bit V1 data uses the standard Intel Hex data record (`0x00`)
     - Data for any other board, like the micro:bit V2, uses the Custom Data record type (`0x0D`)
     - Extended Segment Address records (`0x03`) are converted to Extended Linear Address (`0x04`) records
@@ -155,12 +164,13 @@ So, each target section:
 Note that the End Of File record is excluded from the sections, only one EoF record is include as the last record of the file.
 
 It is also recommended to:
-- Use Data or Custom Data records with 32 bytes in the Data field
+- Use Data or Custom Data records with 16 bytes in the Data field
     - The most common Data field sizes are 16 and 32 bytes
     - Although the Intel Hex format does not limit the data field length, DAPLink has a max length of 32 bytes
-    - Having longer records reduces the overall file size and save up over a second of flashing time
+    - Having longer records reduces the overall file size and saves up over a second of flashing time
+    - However, there is an [issue](https://github.com/ARMmbed/DAPLink/pull/936) with 32 byte records and DAPLink versions 0256 and older
 - Place the micro:bit V1 Section first, followed by the micro:bit V2 Section
-   - DAPLink versions < 255 only halt the target microcontroller when the first flash operation starts, so in the opposite order micro:bit V1 would flash the DAPLink LED a couple of seconds before the user program on the micro:bit stops running
+   - DAPLink versions < 0255 only halt the target microcontroller when the first flash operation starts, so in the opposite order micro:bit V1 would flash the DAPLink LED a couple of seconds before the user program on the micro:bit stops running
 
 #### Section Format In A Hex File
 
@@ -289,3 +299,15 @@ Will transform into this Universal Hex:
 :00000001FF                                                                  <- End Of File record with a new line
 
 ```
+
+
+## Doc Updates
+
+| Version      | Changes |
+|--------------|---------|
+| [0.4.0][040] | Initial release, as implemented in DAPLink 0255. |
+| [1.0.0][100] | Changed recommendation from 32 bytes per data record to 16. |
+|              | Other minor tweaks in the text and content without changing the specification. |
+
+[040]: https://github.com/microbit-foundation/spec-universal-hex/commit/f4cf7e1eb2dd03b58148140fb7200e7b6c3f525a
+[100]: https://github.com/microbit-foundation/spec-universal-hex/pull/20
