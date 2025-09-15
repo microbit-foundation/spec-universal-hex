@@ -13,7 +13,7 @@ is needed in the future, but currently its use is discouraged.
 > **This format is for future use only. The "512 Byte Aligned Sections" format should be used instead**.
 
 Grouping the Universal Hex records into self-contained 512-byte blocks overcomes issues arising from receiving file blocks out of order.
-Furthermore, by making the first part of each 512-byte block contain header metadata, DAPLink can parse this information right and ‘throw away’ irrelevant blocks for its target.
+Furthermore, by making the first part of each 512-byte block contain header metadata, DAPLink can parse this information on every block and ‘throw away’ irrelevant blocks for its target.
 
 Unfortunately all version of DAPLink (up to version 0254 at the time of writing) will try to validate the first line of the Intel Hex file. If the record type in that line does not correspond to a valid Intel Hex record type (`0x00` to `0x05`), it will fail validation and the file won't be processed.
 For this reason the first record of each block will be an Extended Linear Address record (`0x04`), and the second record will contain the block metadata in the Block start record.
@@ -22,7 +22,7 @@ For this reason the first record of each block will be an Extended Linear Addres
 
 > **This format is for future use only. The "512 Byte Aligned Sections" format should be used instead**.
 
-Conventional Intel Hex for micro:bit v1 or v2:
+Conventional Intel Hex for micro:bit V1 or V2:
 
 ```
 Extended Linear Address record (optional if the data starts at address 0x0000_xxxx)
