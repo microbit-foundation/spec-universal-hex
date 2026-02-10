@@ -3,7 +3,8 @@ layout: page
 title: Universal Hex Format Specification
 heading: Universal Hex Format Specification
 description: Specification for the micro:bit Universal Hex Format
-permalink: /software/spec-universal-hex/
+permalink: /firmware/spec-universal-hex/
+slug: /firmware/spec-universal-hex/
 ref: spec-universal-hex
 lang: en
 ---
@@ -20,7 +21,7 @@ The goal of a micro:bit Universal Hex is to be able to create a single-file form
 
 ## Definitions and Rationale
 
-<img align="right" src="https://tech.microbit.org/docs/software/spec-universal-hex/spec/img/universal-hex.png" alt="universal hex">
+<img align="right" src="./img/universal-hex.png" alt="universal hex">
 
 Universal Hex is a superset of the Intel Hex file format to be able to contain binary code for multiple micro:bit boards or subsystems.
 
